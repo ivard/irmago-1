@@ -178,6 +178,12 @@ func (s *Server) Handler() http.Handler {
 	router := chi.NewRouter()
 	router.Use(cors.New(corsOptions).Handler)
 
+	logFormatter := middleware.DefaultLogFormatter{
+		Logger:  s,
+		NoColor: false,
+	}
+	router.Use(middleware.RequestLogger(&logFormatter))
+
 	if !s.conf.separateClientServer() {
 		// Mount server for irmaclient
 		router.Mount("/irma/", s.irmaserv.HandlerFunc())
@@ -200,6 +206,11 @@ func (s *Server) Handler() http.Handler {
 	router.Get("/publickey", s.handlePublicKey)
 
 	return router
+}
+
+// Function determines how messages sent to the server should be printed in debug mode
+func (s *Server) Print(v ...interface{}) {
+	s.conf.Logger.Debug(v)
 }
 
 func (s *Server) StaticFilesHandler() http.Handler {
